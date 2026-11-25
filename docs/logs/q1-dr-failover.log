@@ -1,0 +1,21 @@
+$ # Step 3: Simulate primary disaster (stop primary + wipe primary DB)
+$ docker rm -f dr-abhinav-primary && rm -f /tmp/dr-abhinav/primary/app.db
+dr-abhinav-primary
+$ curl -s --max-time 3 -o /dev/null -w 'HTTP_STATUS=%{http_code}\n' http://localhost:5500/items
+HTTP_STATUS=000
+
+$ # Step 4: Execute automated restore & failover to standby
+$ ./dr/failover_restore.sh /tmp/dr-abhinav/backups/backup-20261125T173149Z.tar.gz /tmp/dr-abhinav/standby
+[dr] Verifying backup integrity...
+/tmp/dr-abhinav/backups/backup-20261125T173149Z.tar.gz: OK
+[dr] Restoring SQLite snapshot to standby storage (/tmp/dr-abhinav/standby)...
+RESTORE_OK target=/tmp/dr-abhinav/standby/app.db elapsed_ms=11
+$ docker exec dr-abhinav-gw nginx -s reload
+2026/11/25 17:31:53 [notice] 31#31: signal process started
+$ curl -s http://localhost:5500/health
+{"slot":"standby","status":"UP","version":"4.1.0"}
+
+$ curl -s http://localhost:5500/items
+{"count":5,"items":[{"created_at":"2026-11-25T17:31:49.152329+00:00","id":1,"name":"txn-101"},{"created_at":"2026-11-25T17:31:49.177128+00:00","id":2,"name":"txn-102"},{"created_at":"2026-11-25T17:31:49.203446+00:00","id":3,"name":"txn-103"},{"created_at":"2026-11-25T17:31:49.226914+00:00","id":4,"name":"txn-104"},{"created_at":"2026-11-25T17:31:49.253194+00:00","id":5,"name":"txn-105"}],"slot":"standby"}
+
+DR_SUMMARY: status=RECOVERED measured_rto_ms=1095 target_rto_ms=30000 rpo_records_lost=0

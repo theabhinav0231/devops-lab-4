@@ -1,0 +1,26 @@
+$ # Step 1: Verify primary health and seed critical transaction records
+$ curl -s http://localhost:5500/health
+{"slot":"primary","status":"UP","version":"4.1.0"}
+
+$ curl -s -X POST http://localhost:5500/items -H 'Content-Type: application/json' -d '{"name":"txn-101"}'
+{"created_at":"2026-11-25T17:31:49.152329+00:00","id":1,"name":"txn-101","slot":"primary"}
+
+$ curl -s -X POST http://localhost:5500/items -H 'Content-Type: application/json' -d '{"name":"txn-102"}'
+{"created_at":"2026-11-25T17:31:49.177128+00:00","id":2,"name":"txn-102","slot":"primary"}
+
+$ curl -s -X POST http://localhost:5500/items -H 'Content-Type: application/json' -d '{"name":"txn-103"}'
+{"created_at":"2026-11-25T17:31:49.203446+00:00","id":3,"name":"txn-103","slot":"primary"}
+
+$ curl -s -X POST http://localhost:5500/items -H 'Content-Type: application/json' -d '{"name":"txn-104"}'
+{"created_at":"2026-11-25T17:31:49.226914+00:00","id":4,"name":"txn-104","slot":"primary"}
+
+$ curl -s -X POST http://localhost:5500/items -H 'Content-Type: application/json' -d '{"name":"txn-105"}'
+{"created_at":"2026-11-25T17:31:49.253194+00:00","id":5,"name":"txn-105","slot":"primary"}
+
+$ # Step 2: Take online consistent SQLite backup with SHA-256 checksum
+$ ./dr/backup.sh /tmp/dr-abhinav/primary/app.db /tmp/dr-abhinav/backups
+BACKUP_OK archive=/tmp/dr-abhinav/backups/backup-20261125T173149Z.tar.gz sha256=715891eb75da4797d57b2d831e2f242c209ecd720aad15bd7c57457fdd8b1f66
+$ ls -lh /tmp/dr-abhinav/backups/
+total 8.0K
+-rw-rw-r-- 1 abhinav abhinav 486 Nov 25 17:31 backup-20261125T173149Z.tar.gz
+-rw-rw-r-- 1 abhinav abhinav 121 Nov 25 17:31 backup-20261125T173149Z.tar.gz.sha256

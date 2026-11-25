@@ -1,0 +1,18 @@
+$ # Phase 1: Canary 10% weight (90% stable v4.1.0 / 10% canary v4.2.0)
+[PHASE1-10PCT] requests=50 stable(v4.1.0)=45 canary(v4.2.0)=5 errors=0 error_rate=0.0% avg_latency_ms=6.5
+Decision: error_rate <= 5.0% -> PROMOTE to 50% canary
+
+$ # Phase 2: Canary 50% weight (50% stable v4.1.0 / 50% canary v4.2.0)
+[PHASE2-50PCT] requests=50 stable(v4.1.0)=25 canary(v4.2.0)=25 errors=0 error_rate=0.0% avg_latency_ms=6.6
+Decision: error_rate <= 5.0% -> HEALTHY
+
+$ # Phase 3: Faulty canary release (SIMULATE_ERROR_RATE=0.6 at 30% traffic) -> test auto-rollback trigger
+deployment.apps/devops-lab4-app-canary env updated
+Waiting for deployment "devops-lab4-app-canary" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "devops-lab4-app-canary" rollout to finish: 1 old replicas are pending termination...
+deployment "devops-lab4-app-canary" successfully rolled out
+[PHASE3-FAULTY] requests=50 stable(v4.1.0)=35 canary(v4.2.0)=6 errors=9 error_rate=18.0% avg_latency_ms=5.2
+ROLLBACK_TRIGGERED: error_rate > 5.0% threshold -> shifting 100% traffic to stable & scaling canary to 0
+deployment.apps/devops-lab4-app-canary scaled
+[POST-ROLLBACK] requests=30 stable(v4.1.0)=30 canary(v4.2.0)=0 errors=0 error_rate=0.0% avg_latency_ms=7.3
+CANARY_SUMMARY: rollback=AUTOMATIC post_rollback_errors=0

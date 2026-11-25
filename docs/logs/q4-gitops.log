@@ -1,0 +1,61 @@
+$ # Step 1: Initial GitOps reconciliation from Git HEAD
+$ ./gitops/reconciler.sh
+[gitops] commit=fa487c3 desired_replicas=2 live_replicas=0
+[gitops] DRIFT OR UPDATE DETECTED -> reconciling cluster state to Git HEAD (fa487c3)
+configmap/gitops-app-config created
+deployment.apps/gitops-app created
+service/gitops-app-svc created
+Waiting for deployment "gitops-app" rollout to finish: 0 of 2 updated replicas are available...
+Waiting for deployment "gitops-app" rollout to finish: 1 of 2 updated replicas are available...
+deployment "gitops-app" successfully rolled out
+
+$ # Step 2: Declarative release via Git commit (replicas: 2 -> 3, APP_VERSION: 4.1.0 -> 4.2.0)
+[main 3e9d9cc] gitops: scale gitops-app to 3 replicas and bump APP_VERSION to 4.2.0
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+$ git log -2 --oneline
+3e9d9cc gitops: scale gitops-app to 3 replicas and bump APP_VERSION to 4.2.0
+fa487c3 security: add HashiCorp Vault least-privilege policy and masked Jenkinsfile
+$ ./gitops/reconciler.sh
+[gitops] commit=3e9d9cc desired_replicas=3 live_replicas=2
+[gitops] DRIFT OR UPDATE DETECTED -> reconciling cluster state to Git HEAD (3e9d9cc)
+configmap/gitops-app-config configured
+deployment.apps/gitops-app configured
+service/gitops-app-svc unchanged
+Waiting for deployment "gitops-app" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gitops-app" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gitops-app" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gitops-app" rollout to finish: 1 out of 3 new replicas have been updated...
+Waiting for deployment "gitops-app" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gitops-app" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gitops-app" rollout to finish: 2 out of 3 new replicas have been updated...
+Waiting for deployment "gitops-app" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "gitops-app" rollout to finish: 1 old replicas are pending termination...
+deployment "gitops-app" successfully rolled out
+
+$ # Step 3: Introduce out-of-band manual drift (scale replicas down to 1)
+$ kubectl scale deploy gitops-app -n lab4-abhinav --replicas=1
+deployment.apps/gitops-app scaled
+$ kubectl get deploy gitops-app -n lab4-abhinav
+NAME         READY   UP-TO-DATE   AVAILABLE   AGE
+gitops-app   1/1     1            1           8s
+
+$ # Step 4: Reconciler detects drift and self-heals cluster back to Git HEAD (replicas=3)
+$ ./gitops/reconciler.sh
+[gitops] commit=3e9d9cc desired_replicas=3 live_replicas=1
+[gitops] DRIFT OR UPDATE DETECTED -> reconciling cluster state to Git HEAD (3e9d9cc)
+configmap/gitops-app-config unchanged
+deployment.apps/gitops-app configured
+service/gitops-app-svc unchanged
+Waiting for deployment "gitops-app" rollout to finish: 1 of 3 updated replicas are available...
+Waiting for deployment "gitops-app" rollout to finish: 2 of 3 updated replicas are available...
+deployment "gitops-app" successfully rolled out
+$ kubectl get pods -n lab4-abhinav -l app=gitops-app
+NAME                          READY   STATUS        RESTARTS   AGE
+gitops-app-56c49787f7-drpkv   1/1     Terminating   0          6s
+gitops-app-56c49787f7-f95ll   1/1     Terminating   0          7s
+gitops-app-56c49787f7-sbnzv   1/1     Running       0          1s
+gitops-app-56c49787f7-vbhcm   1/1     Running       0          1s
+gitops-app-56c49787f7-vcsl7   1/1     Running       0          8s
+gitops-app-7657879476-r7rnf   1/1     Terminating   0          10s
+gitops-app-7657879476-rlk8c   1/1     Terminating   0          10s
+gitops-app-7657879476-s76b6   1/1     Terminating   0          9s

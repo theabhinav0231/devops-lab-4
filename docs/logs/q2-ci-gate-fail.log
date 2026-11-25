@@ -1,0 +1,34 @@
+$ # Step 1: Deliberately break /health status to verify CI test gate blocks deployment
+$ PYTHONPATH=. .venv/bin/pytest tests/ -v --junitxml=reports/junit-failed.xml
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-8.3.5, pluggy-1.7.0 -- /home/abhinav/devops-lab-4/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/abhinav/devops-lab-4
+collecting ... collected 5 items
+
+tests/test_integration.py::test_sqlite_persistence_and_backup_restore PASSED [ 20%]
+tests/test_unit.py::test_health_returns_up FAILED                        [ 40%]
+tests/test_unit.py::test_root_contains_version_and_slot PASSED           [ 60%]
+tests/test_unit.py::test_create_item_rejects_empty_name PASSED           [ 80%]
+tests/test_unit.py::test_secret_check_never_exposes_plaintext PASSED     [100%]
+
+=================================== FAILURES ===================================
+____________________________ test_health_returns_up ____________________________
+
+client = <FlaskClient <Flask 'app.app'>>
+
+    def test_health_returns_up(client):
+        res = client.get("/health")
+        assert res.status_code == 200
+>       assert res.get_json()["status"] == "UP"
+E       AssertionError: assert 'DEGRADED' == 'UP'
+E         
+E         - UP
+E         + DEGRADED
+
+tests/test_unit.py:24: AssertionError
+--- generated xml file: /home/abhinav/devops-lab-4/reports/junit-failed.xml ----
+=========================== short test summary info ============================
+FAILED tests/test_unit.py::test_health_returns_up - AssertionError: assert 'D...
+========================= 1 failed, 4 passed in 0.35s ==========================
+CI_GATE_EXIT_CODE=1 -> DEPLOYMENT BLOCKED BY AUTOMATED TEST GATE

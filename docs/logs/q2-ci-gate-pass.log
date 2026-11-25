@@ -1,0 +1,33 @@
+$ # Step 2: Fix defect and re-run Unit (Gate 1) + Integration (Gate 2) suites
+$ PYTHONPATH=. .venv/bin/pytest tests/test_unit.py -v --junitxml=reports/junit-unit.xml
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-8.3.5, pluggy-1.7.0 -- /home/abhinav/devops-lab-4/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/abhinav/devops-lab-4
+collecting ... collected 4 items
+
+tests/test_unit.py::test_health_returns_up PASSED                        [ 25%]
+tests/test_unit.py::test_root_contains_version_and_slot PASSED           [ 50%]
+tests/test_unit.py::test_create_item_rejects_empty_name PASSED           [ 75%]
+tests/test_unit.py::test_secret_check_never_exposes_plaintext PASSED     [100%]
+
+---- generated xml file: /home/abhinav/devops-lab-4/reports/junit-unit.xml -----
+============================== 4 passed in 0.14s ===============================
+
+$ PYTHONPATH=. .venv/bin/pytest tests/test_integration.py -v --junitxml=reports/junit-integration.xml
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-8.3.5, pluggy-1.7.0 -- /home/abhinav/devops-lab-4/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/abhinav/devops-lab-4
+collecting ... collected 1 item
+
+tests/test_integration.py::test_sqlite_persistence_and_backup_restore PASSED [100%]
+
+- generated xml file: /home/abhinav/devops-lab-4/reports/junit-integration.xml -
+============================== 1 passed in 0.20s ===============================
+
+$ ls -lh reports/junit-*.xml
+-rw-rw-r-- 1 abhinav abhinav 1.2K Nov 25 17:31 reports/junit-failed.xml
+-rw-rw-r-- 1 abhinav abhinav  341 Nov 25 17:31 reports/junit-integration.xml
+-rw-rw-r-- 1 abhinav abhinav  608 Nov 25 17:31 reports/junit-unit.xml
+CI_GATE_RESULT: ALL TESTS PASSED -> BUILD & DEPLOY STAGE UNLOCKED

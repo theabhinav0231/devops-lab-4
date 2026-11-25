@@ -1,0 +1,34 @@
+$ kubectl get deploy,pods,svc -n lab4-abhinav -l app=devops-lab4-app
+NAME                                    READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/devops-lab4-app-blue    2/2     2            2           7s
+deployment.apps/devops-lab4-app-green   2/2     2            2           7s
+
+NAME                                         READY   STATUS    RESTARTS   AGE
+pod/devops-lab4-app-blue-c668d775-qtrgz      1/1     Running   0          7s
+pod/devops-lab4-app-blue-c668d775-wpgvg      1/1     Running   0          7s
+pod/devops-lab4-app-green-76cfdf767f-4f2bv   1/1     Running   0          7s
+pod/devops-lab4-app-green-76cfdf767f-dhkbt   1/1     Running   0          7s
+
+$ # Production traffic currently routed to BLUE (v4.0.0) via Service ClusterIP
+$ curl -s http://10.96.105.144/
+{"app":"devops-lab4-app","hostname":"devops-lab4-app-blue-c668d775-qtrgz","slot":"blue","student":"Abhinav Kumar","version":"4.0.0"}
+
+
+$ # Start continuous zero-downtime probe (30 requests) across BLUE -> GREEN cutover
+req=01 status=200 slot=blue version=4.0.0 pod=devops-lab4-app-blue-c668d775-qtrgz
+req=05 status=200 slot=blue version=4.0.0 pod=devops-lab4-app-blue-c668d775-qtrgz
+req=10 status=200 slot=blue version=4.0.0 pod=devops-lab4-app-blue-c668d775-qtrgz
+>>> PATCHING SERVICE SELECTOR: slot=blue -> slot=green
+req=11 status=200 slot=green version=4.1.0 pod=devops-lab4-app-green-76cfdf767f-4f2bv
+req=12 status=200 slot=green version=4.1.0 pod=devops-lab4-app-green-76cfdf767f-4f2bv
+req=15 status=200 slot=green version=4.1.0 pod=devops-lab4-app-green-76cfdf767f-dhkbt
+req=30 status=200 slot=green version=4.1.0 pod=devops-lab4-app-green-76cfdf767f-dhkbt
+BLUE_GREEN_CUTOVER_RESULT: total=30 ok=30 failed=0 blue_hits=10 green_hits=20
+
+$ # Verify instant rollback back to BLUE (v4.0.0) and forward to GREEN (v4.1.0)
+service/devops-lab4-app-prod patched
+{"app":"devops-lab4-app","hostname":"devops-lab4-app-blue-c668d775-qtrgz","slot":"blue","student":"Abhinav Kumar","version":"4.0.0"}
+
+service/devops-lab4-app-prod patched
+{"app":"devops-lab4-app","hostname":"devops-lab4-app-green-76cfdf767f-dhkbt","slot":"green","student":"Abhinav Kumar","version":"4.1.0"}
+
