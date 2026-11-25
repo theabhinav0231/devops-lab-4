@@ -4,5 +4,5 @@ metadata:
   name: gitops-app-config
   namespace: lab4-abhinav
 data:
-  APP_VERSION: "4.1.0"
+  APP_VERSION: "4.2.0"
   DEPLOYMENT_SLOT: "gitops"
