@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devops-lab4-app-stable
+  namespace: lab4-abhinav
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: devops-lab4-app-canary-demo
+      track: stable
+  template:
+    metadata:
+      labels:
+        app: devops-lab4-app-canary-demo
+        track: stable
+    spec:
+      containers:
+        - name: app
+          image: devops-lab4-app:4.1.0
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5000
+          env:
+            - name: APP_VERSION
+              value: "4.1.0"
+            - name: DEPLOYMENT_SLOT
+              value: "stable"
+            - name: SIMULATE_ERROR_RATE
+              value: "0.0"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: devops-lab4-app-stable-svc
+  namespace: lab4-abhinav
+spec:
+  selector:
+    app: devops-lab4-app-canary-demo
+    track: stable
+  ports:
+    - port: 5000
+      targetPort: 5000
